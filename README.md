@@ -1,2 +1,22 @@
 # hubot-bangarang-annotations
-Create annotations in bangarang (https://github.com/eliothedeman/bangarang) for matching messages in chat.
+
+## Installation
+
+In hubot project repo, run:
+
+`npm install hubot-bangarang-annotations --save`
+
+Then add **hubot-bangarang-annotations** to your `external-scripts.json`:
+
+```json
+[
+  "hubot-bangarang-annotations"
+]
+```
+
+## Sample Interaction
+
+```
+user1>> hubot hello
+hubot>> hello!
+```
