@@ -2,6 +2,9 @@
 logs
 *.log
 
+# Data files
+src/data/deployments.json
+
 # Runtime data
 pids
 *.pid
