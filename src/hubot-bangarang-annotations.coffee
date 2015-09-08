@@ -31,9 +31,45 @@ help = (msg) ->
 
   msg.reply buf
 
+make_url = () ->
+  host = nconf.get("HUBOT_BANGARANG_ANNOTATIONS_HOST")
+  port = nconf.get("HUBOT_BANGARANG_ANNOTATIONS_PORT")
+  protocol = nconf.get("HUBOT_BANGARANG_ANNOTATIONS_PROTOCOL")
+
+  url = "#{protocol}://#{host}:#{port}/api"
+
+probably_unique_id = () ->
+  id = Math.random().toString(36).slice(2)
+
+timestamp = () ->
+  new Date().getTime()
+
+make_incident = (text) ->
+  id = probably_unique_id()
+  data =
+    event: "foo"
+    time: "#{timestamp}"
+    id: "#{id}",
+    active: true
+    escalation: "production-info"
+    description: "#{text}"
+    status: 0
+    metric: 0
+    tags: null
+
+  msg = 
+    "#{id}": data
+
+create_annotation = (msg deployment, text) ->
+  url = make_url()
+  data = make_incident()
+  robot.http(url).header('Content-Type', 'application/json').post(data) (err, res, body) ->
+      if err
+        msg.reply "Could not create annotation #{err}"
+
 deployment_event = (msg, deployment) -> 
   text = msg.message.text
-  msg.reply "#{deployment}: #{text}"
+  msg.reply "Adding annotation to #{deployment}"
 
 module.exports = (robot) ->
 
