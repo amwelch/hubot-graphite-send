@@ -1,3 +1,19 @@
+# Description
+#   Periodically collect/report on room statistics
+#
+# Configuration:
+#   LIST_OF_ENV_VARS_TO_SET
+#
+# Commands:
+#   hubot hello - <what the respond trigger does>
+#   orly - <what the hear trigger does>
+#
+# Notes:
+#   <optional notes required for the script>
+#
+# Author:
+#   Sandy <amwelch@umich.edu>
+
 nconf = require("nconf")
 deployments = require './data/deployments.json'
 
@@ -34,38 +50,27 @@ help = (msg) ->
 make_url = () ->
   host = nconf.get("HUBOT_BANGARANG_ANNOTATIONS_HOST")
   port = nconf.get("HUBOT_BANGARANG_ANNOTATIONS_PORT")
-  protocol = nconf.get("HUBOT_BANGARANG_ANNOTATIONS_PROTOCOL")
 
-  url = "#{protocol}://#{host}:#{port}/api"
+  url = "#{protocol}://#{host}:#{port}/"
 
-probably_unique_id = () ->
-  id = Math.random().toString(36).slice(2)
-
-timestamp = () ->
-  new Date().getTime()
-
-make_incident = (text) ->
-  id = probably_unique_id()
-  data =
-    event: "foo"
-    time: "#{timestamp}"
-    id: "#{id}",
-    active: true
-    escalation: "production-info"
-    description: "#{text}"
-    status: 0
-    metric: 0
-    tags: null
-
-  msg = 
-    "#{id}": data
-
-create_annotation = (msg deployment, text) ->
+create_annotation = (msg deployment text) ->
   url = make_url()
   data = make_incident()
-  robot.http(url).header('Content-Type', 'application/json').post(data) (err, res, body) ->
-      if err
-        msg.reply "Could not create annotation #{err}"
+  options = 
+    args: [
+      '--message'
+      text
+      '--host'
+      host
+      '--deployment'
+      deployment
+    ]
+    scriptPath: "#{__dirname}/python"
+  python_shell.run('annotate.py', options, (err, results) ->
+    if err
+      console.log(err)
+      throw err
+  )
 
 deployment_event = (msg, deployment) -> 
   text = msg.message.text
