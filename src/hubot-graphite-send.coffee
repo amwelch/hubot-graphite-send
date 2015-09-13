@@ -1,21 +1,6 @@
-# Description
-#   Periodically collect/report on room statistics
-#
-# Configuration:
-#   LIST_OF_ENV_VARS_TO_SET
-#
-# Commands:
-#   hubot hello - <what the respond trigger does>
-#   orly - <what the hear trigger does>
-#
-# Notes:
-#   <optional notes required for the script>
-#
-# Author:
-#   Sandy <amwelch@umich.edu>
-
 nconf = require("nconf")
 deployments = require './data/deployments.json'
+graphite = require("graphite-udp")
 
 cwd = process.cwd()
 DEFAULTS_FILE = "#{__dirname}/data/defaults.json"
@@ -26,6 +11,7 @@ nconf.argv()
 
 sanity_check_args = (msg) ->
   required_args = [
+    "HUBOT-GRAPHITE-SEND-HOST"
   ]
 
   for arg in required_args
@@ -47,34 +33,37 @@ help = (msg) ->
 
   msg.reply buf
 
-make_url = () ->
-  host = nconf.get("HUBOT_BANGARANG_ANNOTATIONS_HOST")
-  port = nconf.get("HUBOT_BANGARANG_ANNOTATIONS_PORT")
+get_graphite_client = () ->
+  options = get_graphite_options()
+  client = graphite.createClient(options)
 
-  url = "#{protocol}://#{host}:#{port}/"
-
-create_annotation = (msg deployment text) ->
-  url = make_url()
-  data = make_incident()
+get_graphite_options = () ->
   options = 
-    args: [
-      '--message'
-      text
-      '--host'
-      host
-      '--deployment'
-      deployment
-    ]
-    scriptPath: "#{__dirname}/python"
-  python_shell.run('annotate.py', options, (err, results) ->
-    if err
-      console.log(err)
-      throw err
-  )
+    host: nconf.get("HUBOT-GRAPHITE-SEND-HOST")
+    port: nconf.get("HUBOT-GRAPHITE-SEND-PORT")
+    interval: 10
+    type: 'udp4'
 
-deployment_event = (msg, deployment) -> 
+get_graphite_metric = (msg, deployment) ->
+  prefix = nconf.get("HUBOT-GRAPHITE-SEND-NAMESPACE")
+  msg = msg.replace /\s/, "_"
+  metric = "#{prefix}.#{deployment}.#{msg}"
+
+get_graphite_metric_value = () ->
+  metric = 0
+
+deployment_event = (msg, deployment) ->
   text = msg.message.text
-  msg.reply "Adding annotation to #{deployment}"
+  msg.reply "#{deployment}: #{text}"
+  client = get_graphite_client()
+  metric = get_graphite_metric text, deployment
+  value = get_graphite_metric_value()
+  client.addMetric(metric, value, (err, bytes) ->
+    if err
+      console.log "Error adding metric #{err}"
+    else
+      msg.reply "added metric #{metric}"
+  )
 
 module.exports = (robot) ->
 
