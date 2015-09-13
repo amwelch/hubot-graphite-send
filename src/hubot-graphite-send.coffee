@@ -1,22 +1,46 @@
+# Description:
+#   Send metrics to graphite based on chat messages
+#
+# Dependencies:
+#   "graphite-udp": "*"
+#
+# Configuration:
+#   HUBOT_GRAPHITE_SEND_HOST # host to send metrics to
+#   HUBOT_GRAPHITE_SEND_PORT # Port to send metrics to (default: 2003)
+#   HUBOT_GRAPHITE_SEND_NAMESPACE # Metric prefix (default: hipchat.annotations)
+# Commands:
+#   graphite-send deployments
+#   graphite-send help
+#
+#
+# Notes:
+#   Configuration is done in ./config/hubot-graphite-send-config.json or
+#   through environment variables.
+#
+# Author:
+#   amwelch (https://github.com/amwelch)
+
 nconf = require("nconf")
 deployments = require './data/deployments.json'
 graphite = require("graphite-udp")
 
 cwd = process.cwd()
 DEFAULTS_FILE = "#{__dirname}/data/defaults.json"
+CONFIG_FILE = "#{cwd}/config/hubot-graphite-send-config.json"
 
 nconf.argv()
     .env()
+    .file('config', CONFIG_FILE)
     .file('defaults', DEFAULTS_FILE)
 
 sanity_check_args = (msg) ->
   required_args = [
-    "HUBOT-GRAPHITE-SEND-HOST"
+    "HUBOT_GRAPHITE_SEND_HOST"
   ]
 
   for arg in required_args
     if !nconf.get(arg)
-      buf = "#hubot-grafana-annotations is not properly configured. #{arg} is not set."
+      buf = "#hubot-graphite-send is not properly configured. #{arg} is not set."
       msg.reply buf
       return false
 
@@ -24,8 +48,8 @@ sanity_check_args = (msg) ->
 
 help = (msg) ->
   commands = [
-    "grafana-annotations show deployments"
-    "grafana-annotations help"
+    "graphite-send deployments"
+    "graphite-send help"
   ]
   buf = ""
   for command in commands
@@ -38,14 +62,14 @@ get_graphite_client = () ->
   client = graphite.createClient(options)
 
 get_graphite_options = () ->
-  options = 
-    host: nconf.get("HUBOT-GRAPHITE-SEND-HOST")
-    port: nconf.get("HUBOT-GRAPHITE-SEND-PORT")
+  options =
+    host: nconf.get("HUBOT_GRAPHITE_SEND_HOST")
+    port: nconf.get("HUBOT_GRAPHITE_SEND_PORT")
     interval: 10
     type: 'udp4'
 
 get_graphite_metric = (msg, deployment) ->
-  prefix = nconf.get("HUBOT-GRAPHITE-SEND-NAMESPACE")
+  prefix = nconf.get("HUBOT_GRAPHITE_SEND_NAMESPACE")
   msg = msg.replace /\s/, "_"
   metric = "#{prefix}.#{deployment}.#{msg}"
 
@@ -67,10 +91,10 @@ deployment_event = (msg, deployment) ->
 
 module.exports = (robot) ->
 
-  robot.hear /grafana-annotations help/i, (msg) ->
+  robot.hear /graphite-send help/i, (msg) ->
     help(msg)
 
-  robot.hear /grafana-annotations show deployments/i, (msg) ->
+  robot.hear /graphite-send/i, (msg) ->
     msg.reply triggers.join('\n')
 
   for deployment in deployments
