@@ -20,14 +20,14 @@
 # Author:
 #   amwelch (https://github.com/amwelch)
 
-nconf = require("nconf")
-deployments = require './data/deployments.json'
-graphite = require("graphite-udp")
-
 cwd = process.cwd()
 DEFAULTS_FILE = "#{__dirname}/data/defaults.json"
 CONFIG_FILE = "#{cwd}/config/hubot-graphite-send-config.json"
+DEPLOYMENTS_FILE = "#{cwd}/config/deployments.json"
 
+deployments = require "#{DEPLOYMENTS_FILE}"
+nconf = require("nconf")
+graphite = require("graphite-udp")
 nconf.argv()
     .env()
     .file('config', CONFIG_FILE)
