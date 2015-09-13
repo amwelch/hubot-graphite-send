@@ -37,10 +37,10 @@ sanity_check_args = (msg) ->
   required_args = [
     "HUBOT_GRAPHITE_SEND_HOST"
   ]
-
+  name = "hubot-graphite-send"
   for arg in required_args
     if !nconf.get(arg)
-      buf = "#hubot-graphite-send is not properly configured. #{arg} is not set."
+      buf = "#{name} is not properly configured. #{arg} is not set."
       msg.reply buf
       return false
 
@@ -78,7 +78,7 @@ get_graphite_metric_value = () ->
 
 deployment_event = (msg, deployment) ->
   text = msg.message.text
-  msg.reply "#{deployment}: #{text}"
+  console.log "#{deployment}: #{text}"
   client = get_graphite_client()
   metric = get_graphite_metric text, deployment
   value = get_graphite_metric_value()
@@ -86,7 +86,7 @@ deployment_event = (msg, deployment) ->
     if err
       console.log "Error adding metric #{err}"
     else
-      msg.reply "added metric #{metric}"
+      console.log "added metric #{metric}"
   )
 
 module.exports = (robot) ->
