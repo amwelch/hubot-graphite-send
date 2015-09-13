@@ -1,16 +1,16 @@
-# hubot-bangarang-annotations
+# hubot-graphite-send
 
 ## Installation
 
 In hubot project repo, run:
 
-`npm install hubot-bangarang-annotations --save`
+`npm install hubot-graphite-send --save`
 
-Then add **hubot-bangarang-annotations** to your `external-scripts.json`:
+Then add **hubot-graphite-send** to your `external-scripts.json`:
 
 ```json
 [
-  "hubot-bangarang-annotations"
+  "hubot-graphite-send"
 ]
 ```
 
